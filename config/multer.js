@@ -2,26 +2,20 @@
 const multer = require('multer');
 const path = require('path');
 
-// Set storage engine
+// Set up storage configuration for multer
 const storage = multer.diskStorage({
-  destination: './uploads/', // Folder where images will be stored
+  destination: function (req, file, cb) {
+    cb(null, './uploads'); // Directory where files will be stored
+  },
   filename: function (req, file, cb) {
-    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname)); // Unique filename with timestamp
   },
 });
 
-// Init upload
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 1000000 }, // Limit file size to 1MB
-  fileFilter: function (req, file, cb) {
-    checkFileType(file, cb);
-  },
-}).single('profileImage'); // 'profileImage' is the field name for file uploads
-
-// Check file type
+// Check file type helper function
 function checkFileType(file, cb) {
-  const filetypes = /jpeg|jpg|png|gif/; // Allowed ext
+  // Allowed file extensions
+  const filetypes = /jpeg|jpg|png|gif/;
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = filetypes.test(file.mimetype);
 
@@ -32,4 +26,14 @@ function checkFileType(file, cb) {
   }
 }
 
+// Initialize upload middleware
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 1000000 }, // Limit file size to 1MB
+  fileFilter: function (req, file, cb) {
+    checkFileType(file, cb);
+  },
+});
+
+// Export the upload middleware
 module.exports = upload;

@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
   gender: { type: String, required: true },
   termsAccepted: { type: Boolean, required: true },
   role: { type: String, default: 'user' }, // 'user' or 'admin'
+  profileImage: { type: String }, // Field for storing the image URL
 });
 
 // Password hashing before saving
