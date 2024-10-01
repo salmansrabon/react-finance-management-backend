@@ -1,5 +1,7 @@
 // controllers/userController.js
 const User = require('../models/user');
+const upload = require('../config/multer');
+const path = require('path');
 
 // Get all users
 const getAllUsers = async (req, res) => {
@@ -67,5 +69,38 @@ const deleteUser = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+const uploadImage = (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ message: err });
+    } else {
+      if (req.file === undefined) {
+        return res.status(400).json({ message: 'No file selected' });
+      }
 
-module.exports = { getAllUsers, getUserById, updateUser, deleteUser };
+      try {
+        const { id } = req.params; // Get the user ID from URL parameters
+
+        // Update the user's profileImage with the file path
+        const updatedUser = await User.findByIdAndUpdate(
+          id,
+          { profileImage: `/uploads/${req.file.filename}` }, // Save file path as the profileImage URL
+          { new: true, runValidators: true }
+        );
+
+        if (!updatedUser) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+          message: 'Image uploaded successfully',
+          user: updatedUser,
+        });
+      } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+      }
+    }
+  });
+};
+
+module.exports = { getAllUsers, getUserById, updateUser, deleteUser, uploadImage };
