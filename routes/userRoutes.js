@@ -1,7 +1,8 @@
 // routes/userRoutes.js
 const express = require('express');
-const { getAllUsers, getUserById, updateUser, deleteUser } = require('../controllers/userController');
+const { getAllUsers, getUserById, updateUser, deleteUser, uploadImage } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
+const upload = require('../config/multer'); // Import the multer config
 const router = express.Router();
 
 // Route to get all users
@@ -15,4 +16,8 @@ router.put('/:id', protect, updateUser); // Use HTTP PUT for updating a user
 
 // Delete a user by ID
 router.delete('/:id', protect, deleteUser); // Use HTTP DELETE for deleting a user
+
+// Upload image route
+router.put('/:id/upload', upload.single('profileImage'), uploadImage);
+
 module.exports = router;
