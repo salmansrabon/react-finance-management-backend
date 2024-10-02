@@ -1,37 +1,36 @@
-// models/cost.js
-const mongoose = require('mongoose');
+const { Sequelize, DataTypes, Model } = require('sequelize');
+const { sequelize } = require('../config/db'); // Adjust the path as needed
 
-const costSchema = new mongoose.Schema({
-  itemName: {
-    type: String,
-    required: true,
-  },
-  quantity: {
-    type: Number,
-    required: true,
-  },
-  amount: {
-    type: Number,
-    required: true,
-  },
-  purchaseDate: {
-    type: Date,
-    required: true,
-  },
-  month: {
-    type: String,
-    required: true,
-  },
-  remarks: {
-    type: String,
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-});
 
-const Cost = mongoose.model('Cost', costSchema);
+class Cost extends Model {}
+
+Cost.init(
+  {
+    _id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    itemName: { type: DataTypes.STRING, allowNull: false },
+    quantity: { type: DataTypes.INTEGER, allowNull: false },
+    amount: { type: DataTypes.FLOAT, allowNull: false },
+    purchaseDate: { type: DataTypes.DATE, allowNull: false },
+    month: { type: DataTypes.STRING, allowNull: false },
+    remarks: { type: DataTypes.STRING },
+    userId: {
+      type: DataTypes.UUID,
+      references: {
+        model: 'users',
+        key: '_id',
+      },
+      allowNull: false,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'Cost',
+    tableName: 'costs',
+  }
+);
 
 module.exports = Cost;
