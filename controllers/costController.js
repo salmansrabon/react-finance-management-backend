@@ -1,13 +1,12 @@
-// controllers/costController.js
-const Cost = require('../models/cost');
+const Cost = require('../models/cost'); // Sequelize model
 
 // Create a new cost entry
 const createCost = async (req, res) => {
   try {
     const { itemName, quantity, amount, purchaseDate, month, remarks } = req.body;
 
-    // Create a new cost object
-    const cost = new Cost({
+    // Create a new cost object using Sequelize
+    const newCost = await Cost.create({
       itemName,
       quantity,
       amount,
@@ -17,10 +16,7 @@ const createCost = async (req, res) => {
       userId: req.user._id, // Use the logged-in user's ID from the token
     });
 
-    // Save the cost to the database
-    const savedCost = await cost.save();
-
-    res.status(201).json(savedCost);
+    res.status(201).json(newCost);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -29,27 +25,34 @@ const createCost = async (req, res) => {
 // Get all costs for a user in descending order of purchaseDate
 const getAllCosts = async (req, res) => {
   try {
-    // Fetch only costs that match the logged-in user's ID
-    const costs = await Cost.find({ userId: req.user._id }).sort({ purchaseDate: -1 });
+    // Fetch costs that match the logged-in user's ID
+    const costs = await Cost.findAll({
+      where: { userId: req.user._id },
+      order: [['purchaseDate', 'DESC']],
+    });
     res.status(200).json(costs);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+// Get a cost by ID
 const getCostById = async (req, res) => {
-    try {
-      const cost = await Cost.findById(req.params.id);
-  
-      if (!cost) {
-        return res.status(404).json({ message: 'Cost not found' });
-      }
-  
-      res.status(200).json(cost); // Send back the cost data as response
-    } catch (error) {
-      res.status(500).json({ message: 'Server error', error: error.message });
+  try {
+    const { id } = req.params;
+
+    // Find cost by primary key
+    const cost = await Cost.findByPk(id);
+
+    if (!cost) {
+      return res.status(404).json({ message: 'Cost not found' });
     }
-  };
-  
+
+    res.status(200).json(cost);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
 
 // Update a cost by ID
 const updateCost = async (req, res) => {
@@ -57,16 +60,18 @@ const updateCost = async (req, res) => {
     const { id } = req.params;
     const { itemName, quantity, amount, purchaseDate, month, remarks } = req.body;
 
-    // Find and update the cost with matching userId
-    const updatedCost = await Cost.findOneAndUpdate(
-      { _id: id, userId: req.user._id },
+    // Find and update the cost entry
+    const [updatedRowsCount] = await Cost.update(
       { itemName, quantity, amount, purchaseDate, month, remarks },
-      { new: true }
+      { where: { _id: id, userId: req.user._id } }
     );
 
-    if (!updatedCost) {
+    if (updatedRowsCount === 0) {
       return res.status(404).json({ message: 'Cost not found' });
     }
+
+    // Retrieve the updated cost entry
+    const updatedCost = await Cost.findByPk(id);
 
     res.status(200).json(updatedCost);
   } catch (error) {
@@ -79,10 +84,10 @@ const deleteCost = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Find and delete the cost that matches the user ID
-    const deletedCost = await Cost.findOneAndDelete({ _id: id, userId: req.user._id });
+    // Delete the cost entry that matches the user ID
+    const deletedRowsCount = await Cost.destroy({ where: { _id: id, userId: req.user._id } });
 
-    if (!deletedCost) {
+    if (deletedRowsCount === 0) {
       return res.status(404).json({ message: 'Cost not found' });
     }
 
@@ -92,4 +97,4 @@ const deleteCost = async (req, res) => {
   }
 };
 
-module.exports = { createCost, getAllCosts,getCostById, updateCost, deleteCost };
+module.exports = { createCost, getAllCosts, getCostById, updateCost, deleteCost };

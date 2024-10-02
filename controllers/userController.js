@@ -1,11 +1,10 @@
-// controllers/userController.js
-const User = require('../models/user');
+const User = require('../models/user'); // Sequelize model
 const upload = require('../config/multer');
 
 // Get all users
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({});
+    const users = await User.findAll(); // Sequelize's findAll to get all users
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -15,51 +14,56 @@ const getAllUsers = async (req, res) => {
 // Get a user by ID
 const getUserById = async (req, res) => {
   try {
-    const { id } = req.params; // Check if req.params.id is being captured
-    console.log('Searching for user with ID:', id); // Log the ID to ensure it's received
+    const { id } = req.params;
+    console.log('Searching for user with ID:', id);
 
-    // Find user by _id in MongoDB
-    const user = await User.findById(id);
+    // Sequelize's findByPk to find by primary key
+    const user = await User.findByPk(id);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.status(200).json(user); // Send back the user data as response
+    res.status(200).json(user);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+// Update user by ID
 const updateUser = async (req, res) => {
   try {
-    const { id } = req.params; // Get the user ID from URL parameters
+    const { id } = req.params;
 
-    // Find the user by ID and update with new data
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      req.body, // Data to update (make sure you validate this before)
-      { new: true, runValidators: true }
-    );
+    // Update user data using Sequelize's update method
+    const [updatedRowsCount] = await User.update(req.body, {
+      where: { _id: id },
+    });
 
-    if (!updatedUser) {
+    if (updatedRowsCount === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Retrieve the updated user after successful update
+    const updatedUser = await User.findByPk(id);
+
     res.status(200).json(updatedUser);
   } catch (err) {
+    console.error('Update error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
 
 // Delete user by ID
 const deleteUser = async (req, res) => {
   try {
-    const { id } = req.params; // Get the user ID from URL parameters
+    const { id } = req.params;
 
-    // Find the user by ID and delete
-    const deletedUser = await User.findByIdAndDelete(id);
+    // Delete user using Sequelize's destroy method
+    const deletedRowsCount = await User.destroy({ where: { _id: id } });
 
-    if (!deletedUser) {
+    if (deletedRowsCount === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
 
@@ -68,32 +72,30 @@ const deleteUser = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+// Upload user image and update profileImage field
 const uploadImage = async (req, res) => {
   try {
-    // Check if no file is uploaded
     if (!req.file) {
       return res.status(400).json({ message: 'No file selected' });
     }
 
-    // Get the user ID from request parameters
     const { id } = req.params;
-
-    // Get the file path to save it in the database
     const filePath = `/uploads/${req.file.filename}`;
 
-    // Update the user's profileImage field with the new file path
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
+    // Update user's profileImage field with the new file path
+    const updatedRowsCount = await User.update(
       { profileImage: filePath },
-      { new: true, runValidators: true }
+      { where: { _id: id } }
     );
 
-    // If no user is found, return an error
-    if (!updatedUser) {
+    if (updatedRowsCount === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Respond with success and the updated user data
+    // Retrieve the updated user after the update operation
+    const updatedUser = await User.findByPk(id);
+
     res.status(200).json({
       message: 'Image uploaded successfully',
       profileImageUrl: updatedUser.profileImage,
@@ -103,5 +105,6 @@ const uploadImage = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 module.exports = { getAllUsers, getUserById, updateUser, deleteUser, uploadImage };

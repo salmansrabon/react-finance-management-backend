@@ -1,4 +1,3 @@
-// middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
@@ -17,17 +16,22 @@ const protect = async (req, res, next) => {
       if (decoded.role === 'admin') {
         req.user = { id: decoded.id, role: 'admin' }; // Set the admin user in the request
       } else {
-        // For regular users, find the user by ID from the token
-        req.user = await User.findById(decoded.id).select('-password');
+        // For regular users, find the user by ID from the token using Sequelize's findByPk
+        const user = await User.findByPk(decoded.id, {
+          attributes: { exclude: ['password'] }, // Exclude password
+        });
 
         // If no user found, return authorization error
-        if (!req.user) {
+        if (!user) {
           return res.status(401).json({ message: 'Not authorized, user not found' });
         }
+
+        req.user = user;
       }
 
       next();
     } catch (error) {
+      console.error('Authentication error:', error);
       res.status(401).json({ message: 'Not authorized, token failed' });
     }
   } else {

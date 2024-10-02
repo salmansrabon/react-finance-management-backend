@@ -1,33 +1,49 @@
-// models/User.js
-const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { Sequelize, DataTypes, Model } = require('sequelize');
+const { sequelize } = require('../config/db'); // Adjust the path as needed
+const { v4: uuidv4 } = require('uuid'); // Import uuidv4
 
-const userSchema = new mongoose.Schema({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  email: { type: String, unique: true, required: true },
-  password: { type: String, required: true },
-  phoneNumber: { type: String, required: true },
-  address: { type: String, required: true },
-  gender: { type: String, required: true },
-  termsAccepted: { type: Boolean, required: true },
-  role: { type: String, default: 'user' }, // 'user' or 'admin'
-  profileImage: { type: String }, // Field for storing the image URL
-});
 
-// Password hashing before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    next();
+class User extends Model {
+  async matchPassword(enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-});
+}
 
-// Method to check password validity
-userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
+User.init(
+  {
+    _id: {
+      type: DataTypes.UUID,
+      defaultValue: uuidv4, // Use uuidv4 function
+      primaryKey: true,
+    },
+    firstName: { type: DataTypes.STRING, allowNull: false },
+    lastName: { type: DataTypes.STRING, allowNull: false },
+    email: { type: DataTypes.STRING, unique: true, allowNull: false },
+    password: { type: DataTypes.STRING, allowNull: false },
+    phoneNumber: { type: DataTypes.STRING, allowNull: false },
+    address: { type: DataTypes.STRING, allowNull: false },
+    gender: { type: DataTypes.STRING, allowNull: false },
+    termsAccepted: { type: DataTypes.BOOLEAN, allowNull: false },
+    role: { type: DataTypes.STRING, defaultValue: 'user' },
+    profileImage: { type: DataTypes.STRING },
+  },
+  {
+    sequelize,
+    modelName: 'User',
+    tableName: 'users',
+    hooks: {
+      beforeSave: async (user) => {
+        if (user.changed('password')) {
+          const salt = await bcrypt.genSalt(10);
+          user.password = await bcrypt.hash(user.password, salt);
+        }
+      },
+      afterCreate: (user, options) => {
+        console.log('Generated _id:', user._id);
+      },
+    },
+  }
+);
 
-const User = mongoose.model('User', userSchema);
 module.exports = User;

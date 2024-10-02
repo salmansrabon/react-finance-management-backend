@@ -1,23 +1,25 @@
 // config/db.js
-const mongoose = require('mongoose');
+const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-const username = encodeURIComponent(`${process.env.db_username}`);
-const password = encodeURIComponent(`${process.env.db_password}`);
+// Create a Sequelize instance
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USERNAME, process.env.DB_PASSWORD, {
+  host: process.env.DB_HOST,
+  dialect: 'mysql',
+  define: {
+    freezeTableName: true, // Prevent Sequelize from pluralizing table names
+  },
+});
 
+// Function to authenticate and connect to the database
 const connectDB = async () => {
   try {
-
-    // Connect to MongoDB using the URI from .env file and add dbName option
-    await mongoose.connect(`mongodb+srv://${username}:${password}@clusterm0.o3gy7.mongodb.net/?retryWrites=true&w=majority&appName=ClusterM0`, {
-      dbName: 'react-junit-app', // Add the name of your database here
-    });
-
-    console.log('MongoDB connected successfully');
+    await sequelize.authenticate();
+    console.log('MySQL connected successfully');
   } catch (error) {
-    console.error('Error connecting to MongoDB:', error);
+    console.error('Error connecting to MySQL:', error);
     process.exit(1);
   }
 };
 
-module.exports = connectDB;
+module.exports = { sequelize, connectDB };

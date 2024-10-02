@@ -16,12 +16,14 @@ const registerUser = async (req, res) => {
   const { firstName, lastName, email, password, phoneNumber, address, gender, termsAccepted } = req.body;
 
   try {
-    const userExists = await User.findOne({ email });
+    // Check if the user already exists using Sequelize syntax
+    const userExists = await User.findOne({ where: { email } });
 
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Create a new user
     const user = await User.create({
       firstName,
       lastName,
@@ -34,38 +36,40 @@ const registerUser = async (req, res) => {
     });
 
     res.status(201).json({
-      _id: user._id,
+      _id: user._id, // Use user._id to match MongoDB-like ID
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: 'user', // Default role for registered users
-      token: generateToken(user._id, 'user'), // Pass user role while generating token
+      role: 'user',
+      token: generateToken(user._id, 'user'),
     });
   } catch (error) {
+    console.error('Error:', error); // Log the error for debugging
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 // User/Admin login
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
       // Admin login case
       res.json({
         _id: 'admin_id',
-        email: ADMIN_EMAIL,
+        email: process.env.ADMIN_EMAIL,
         role: 'admin',
         token: generateToken('admin_id', 'admin'), // Generate token with 'admin' role
       });
     } else {
       // Regular user login case
-      const user = await User.findOne({ email });
+      const user = await User.findOne({ where: { email } }); // Use Sequelize's `where` clause
 
       if (user && (await user.matchPassword(password))) {
         res.json({
-          _id: user._id,
+          _id: user._id, // Use Sequelize's `user._id`
           email: user.email,
           role: user.role,
           token: generateToken(user._id, user.role), // Generate token with user's role
@@ -75,8 +79,10 @@ const loginUser = async (req, res) => {
       }
     }
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 module.exports = { registerUser, loginUser };
