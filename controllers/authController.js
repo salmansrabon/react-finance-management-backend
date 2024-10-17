@@ -7,8 +7,6 @@ const { Sequelize } = require('sequelize');
 const { sendEmail } = require('../sendMail'); // Import the sendMail function
 
 // Admin credentials (for demonstration purpose only; consider using a secure storage)
-const ADMIN_EMAIL = 'admin@test.com';
-const ADMIN_PASSWORD = 'admin123';
 
 // Admin credentials (for demonstration purpose only; consider using a secure storage)
 const ADMIN_EMAIL = 'admin@test.com';
