@@ -2,9 +2,13 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
+// Admin credentials (for demonstration purpose only; consider using a secure storage)
+const ADMIN_EMAIL = 'admin@test.com';
+const ADMIN_PASSWORD = 'admin123';
+
 // Function to generate JWT token with user ID and role
 const generateToken = (id, role = 'user') => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
 // Register new user
