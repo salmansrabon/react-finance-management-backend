@@ -3,10 +3,9 @@ const { Sequelize, DataTypes, Model } = require('sequelize');
 const { sequelize } = require('../config/db'); // Adjust the path as needed
 const { v4: uuidv4 } = require('uuid'); // Import uuidv4
 
-
 class User extends Model {
   async matchPassword(enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password);
+    return await bcrypt.compare(enteredPassword, this.password); // Compare the entered password with hashed one
   }
 }
 
@@ -27,6 +26,8 @@ User.init(
     termsAccepted: { type: DataTypes.BOOLEAN, allowNull: false },
     role: { type: DataTypes.STRING, defaultValue: 'user' },
     profileImage: { type: DataTypes.STRING },
+    resetPasswordToken: { type: DataTypes.STRING, allowNull: true },
+    resetPasswordExpire: { type: DataTypes.DATE, allowNull: true },
   },
   {
     sequelize,
