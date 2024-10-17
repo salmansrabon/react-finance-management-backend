@@ -1,4 +1,5 @@
 const User = require('../models/user'); // Sequelize model
+const upload = require('../config/multer');
 
 // Get all users
 const getAllUsers = async (req, res) => {
@@ -34,20 +35,19 @@ const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Find the user by ID first
-    const user = await User.findByPk(id);
+    // Update user data using Sequelize's update method
+    const [updatedRowsCount] = await User.update(req.body, {
+      where: { _id: id },
+    });
 
-    if (!user) {
+    if (updatedRowsCount === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Update fields directly
-    user.set(req.body);
+    // Retrieve the updated user after successful update
+    const updatedUser = await User.findByPk(id);
 
-    // Save the user to trigger hooks and validations
-    await user.save();
-
-    res.status(200).json(user);
+    res.status(200).json(updatedUser);
   } catch (err) {
     console.error('Update error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
