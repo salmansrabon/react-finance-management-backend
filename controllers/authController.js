@@ -51,12 +51,12 @@ const registerUser = async (req, res) => {
       Best regards,
       Road to Career
     `;
-    await sendEmail(
-      'noreply@roadtocareer.net', // Sender email address
-      email, // Recipient email address (newly registered user)
-      subject,
-      message
-    );
+    // await sendEmail(
+    //   'noreply@roadtocareer.net', // Sender email address
+    //   email, // Recipient email address (newly registered user)
+    //   subject,
+    //   message
+    // );
 
     res.status(201).json({
       _id: user._id,
